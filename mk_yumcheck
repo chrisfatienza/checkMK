@@ -1,0 +1,48 @@
+#!/bin/bash
+# Checkmk local plugin: YUM Security and Kernel Update Checker (RHEL/CentOS/Oracle 7+)
+# Author: Christopher Atienza
+# Place in /usr/lib/check_mk_agent/local/
+# chmod +x /usr/lib/check_mk_agent/local/mk_yum_security_kernel
+
+echo "<<<yum_security:sep(124)>>>"
+
+# Ensure yum is available
+if ! command -v yum >/dev/null 2>&1; then
+    echo "2 SecurityUpdate - CRIT - yum not found"
+    exit 2
+fi
+
+CURRENT_KERNEL=$(uname -r)
+IMPORTANT=0
+MODERATE=0
+KERNEL_UPDATE=""
+
+# Check if updateinfo plugin is usable
+if ! yum -q updateinfo summary >/dev/null 2>&1; then
+    echo "2 SecurityUpdate - CRIT - yum-plugin-security not available or metadata missing"
+    exit 2
+fi
+
+# Parse updateinfo summary
+SUMMARY=$(yum -q updateinfo summary 2>/dev/null)
+IMPORTANT=$(echo "$SUMMARY" | awk '/Important Security notice/ {print $1}')
+MODERATE=$(echo "$SUMMARY" | awk '/Moderate Security notice/ {print $1}')
+IMPORTANT=${IMPORTANT:-0}
+MODERATE=${MODERATE:-0}
+
+# Check if newer kernel is available
+KERNEL_LINE=$(yum list updates -q 2>/dev/null | grep '^kernel\.' | awk '{print $2}' | sort -V | tail -n1)
+if [ -n "$KERNEL_LINE" ]; then
+    KERNEL_UPDATE="$KERNEL_LINE"
+fi
+
+# Determine result
+if [ "$IMPORTANT" -gt 0 ] || [ "$MODERATE" -gt 0 ] || [ -n "$KERNEL_UPDATE" ]; then
+    STATUS="2 SecurityUpdate - CRIT - Security updates: $IMPORTANT important, $MODERATE moderate"
+    if [ -n "$KERNEL_UPDATE" ]; then
+        STATUS="$STATUS | Kernel update available: Current=$CURRENT_KERNEL, New=$KERNEL_UPDATE"
+    fi
+    echo "$STATUS"
+else
+    echo "0 SecurityUpdate - OK - No security or kernel updates required"
+fi

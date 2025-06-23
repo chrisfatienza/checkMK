@@ -1,79 +1,28 @@
-**mk_yumseccheck**
-A custom Checkmk local plugin that monitors YUM/DNF-based Linux systems for:
+# mk_yumseccheck
 
-Security updates (Important and Moderate)
+`mk_yumseccheck` is a **Checkmk local plugin** for monitoring Linux systems that use **YUM** or **DNF** (such as RHEL, CentOS, Oracle Linux, Rocky, or AlmaLinux).
 
-Kernel updates
+It checks for:
 
-The plugin returns a CRIT state if any such updates are available, and OK otherwise.
+- Security updates (Important & Moderate)
+- Kernel updates
 
-**What It Does**
-This plugin checks for:
+If any such updates are found, the plugin reports a **CRIT** status to Checkmk. If nothing is pending, it reports **OK**.
 
-Any available Important or Moderate security notices
+---
 
-Any available kernel updates
+## 🔍 What It Does
 
-**Displays:**
+The plugin runs as part of the Checkmk agent and reports:
 
-The current running kernel version
+- Count of **Important** and **Moderate** security updates
+- Whether a **newer kernel** version is available
+- The current and newest available kernel version (if applicable)
 
-The latest available kernel version (if newer exists)
+---
 
-**Example Output**
-When security + kernel updates are found:
+## ✅ Example Output
 
-2 SecurityUpdate - CRIT - Security updates: 2 important, 5 moderate | Kernel update available: Current=5.14.0-427.24.1.el9_4.x86_64, New=5.14.0-503.40.1.el9_5.cloud.1.0
-When the system is fully up-to-date:
-
-0 YumSecurity - OK - No security or kernel updates
-
-📦 **Installation**
-Copy the plugin to the Checkmk agent local plugin directory:
-
-sudo cp mk_yumseccheck /usr/lib/check_mk_agent/local/
-sudo chmod +x /usr/lib/check_mk_agent/local/mk_yumseccheck
-
-Ensure yum and yum-plugin-security are installed:
-
-sudo yum install -y yum-plugin-security
-
-On RHEL/Rocky/Oracle Linux 8 and 9, yum is a compatibility wrapper for dnf — this plugin works with both.
-
-**Test the plugin manually:**
-
-/usr/lib/check_mk_agent/local/mk_yumseccheck
-
-The plugin output appears under the section:
-
+```text
 <<<yum_security:sep(124)>>>
-
-✅ Compatibility
-Distribution	Version	Compatible
-RHEL	7, 8, 9	✅
-CentOS	7	✅
-Oracle Linux	7, 8, 9	✅
-Rocky Linux	8, 9	✅
-AlmaLinux	8, 9	✅
-
-The plugin works with YUM or DNF as long as the yum CLI is available (yum is typically symlinked to dnf in EL 8/9 systems).
-
-🛠️ **Requirements**
-yum (or yum symlinked to dnf)
-
-yum-plugin-security (or native support in EL8+)
-
-**Checkmk agent 2.x or later**
-
-❗ **Alerting Logic**
-A CRIT status is triggered if:
-
-There are any Important or Moderate security updates
-
-A newer kernel package is available
-
-An OK status is returned only when:
-
-No security updates are pending
-
-No newer kernel packages are available
+2 YumSecurity - CRIT - Security updates: 2 important, 5 moderate | Kernel update available: Current=5.14.0-427.24.1.el9_4.x86_64, New=5.14.0-503.40.1.el9_5.cloud.1.0
